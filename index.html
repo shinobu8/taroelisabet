@@ -639,6 +639,86 @@ dialog {
   .btn:hover { transform: none; }
   .tarot-back:hover:not(.chosen) { box-shadow: 0 7px 12px #1f3b2815; transform: none; }
 }
+
+/* Mobile navigation stays outside document flow; only compositor-friendly properties move. */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgb(4 18 13 / 30%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  touch-action: pinch-zoom;
+  transition: opacity 180ms ease, visibility 0s linear 220ms;
+}
+.menu-backdrop[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition-delay: 0s;
+}
+.menu-toggle svg { overflow: visible; }
+.menu-toggle .menu-line {
+  transform-origin: 12px 12px;
+  stroke-linecap: round;
+  transition: transform 220ms cubic-bezier(.2,.7,.2,1), opacity 140ms ease;
+}
+.menu-toggle .menu-line-top { transform: translateY(-5px); }
+.menu-toggle .menu-line-bottom { transform: translateY(5px); }
+.menu-toggle[aria-expanded="true"] .menu-line-top { transform: rotate(45deg); }
+.menu-toggle[aria-expanded="true"] .menu-line-middle { opacity: 0; transform: scaleX(.35); }
+.menu-toggle[aria-expanded="true"] .menu-line-bottom { transform: rotate(-45deg); }
+@media (max-width: 1280px) {
+  .header { position: sticky; top: 0; z-index: 70; background: var(--paper); }
+  .mobile-nav:not([hidden]) {
+    position: fixed;
+    z-index: 80;
+    top: calc(var(--menu-header-height, 100px) + 8px);
+    left: max(var(--page-gutter), env(safe-area-inset-left, 0px));
+    right: max(var(--page-gutter), env(safe-area-inset-right, 0px));
+    width: auto;
+    inline-size: auto;
+    display: grid;
+    gap: 4px;
+    padding: 12px;
+    max-block-size: calc(100vh - var(--menu-header-height, 100px) - 24px);
+    max-block-size: calc(100dvh - var(--menu-header-height, 100px) - 24px - env(safe-area-inset-bottom, 0px));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    background: var(--surface-raised);
+    box-shadow: 0 16px 40px rgb(3 20 13 / 16%);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    touch-action: pan-y pinch-zoom;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateY(-12px) scale(.985);
+    transform-origin: top right;
+    transition: opacity 180ms ease, transform 220ms cubic-bezier(.2,.7,.2,1), visibility 0s linear 220ms;
+  }
+  .mobile-nav[data-open="true"]:not([hidden]) {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: translateY(0) scale(1);
+    transition-delay: 0s;
+  }
+  .mobile-nav a {
+    padding: 11px 14px;
+    min-block-size: 48px;
+    border-radius: 8px;
+    transition: background-color 140ms ease;
+  }
+  .mobile-nav a:focus-visible, .mobile-nav a:hover { background: var(--wash); }
+}
+@media (min-width: 1281px) {
+  .menu-backdrop { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mobile-nav, .menu-backdrop, .menu-toggle .menu-line { transition: none !important; }
+}
 </style>
   
   
@@ -652,11 +732,12 @@ dialog {
   <header class="header">
     <a class="brand" href="#/" aria-label="ELISABET — главная"><svg class="brand-symbol" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 2v9m0 26v9M2 24h9m26 0h9M8.5 8.5l6.4 6.4m18.2 18.2 6.4 6.4m0-31-6.4 6.4M14.9 33.1l-6.4 6.4"/><circle cx="24" cy="24" r="10"/><path d="M24 15v18m-9-9h18"/></svg><span>ELISABET<small>НА ОДНОЙ ОРБИТЕ С СОБОЙ</small></span></a>
     <nav class="desktop-nav" aria-label="Основная навигация"><a href="#/category/astrology">Астрология</a><a href="#/category/numerology">Нумерология</a><a href="#/matrix">Матрица судьбы</a><a href="#/category/tarot">Таро и практики</a></nav>
-    <div class="header-actions"><button class="icon-btn theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button class="icon-btn search-open" aria-label="Найти тему"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button><a class="telegram-top" href="https://t.me/taroelisabet" target="_blank" rel="noopener noreferrer">Мы в Telegram <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 17-7-4 17-5-6-8-4Zm8 4 9-11"/></svg></a><button class="icon-btn menu-toggle" aria-label="Открыть меню" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>
+    <div class="header-actions"><button class="icon-btn theme-toggle" type="button" aria-label="Включить тёмную тему" aria-pressed="false" title="Включить тёмную тему"><svg class="theme-icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 13A8.5 8.5 0 0 1 11 3.5 8.5 8.5 0 1 0 20.5 13Z"/></svg><svg class="theme-icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg></button><button class="icon-btn search-open" aria-label="Найти тему"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg></button><a class="telegram-top" href="https://t.me/taroelisabet" target="_blank" rel="noopener noreferrer">Мы в Telegram <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 17-7-4 17-5-6-8-4Zm8 4 9-11"/></svg></a><button class="icon-btn menu-toggle" aria-label="Открыть меню" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="menu-line menu-line-top" d="M4 12h16"/><path class="menu-line menu-line-middle" d="M4 12h16"/><path class="menu-line menu-line-bottom" d="M4 12h16"/></svg></button></div>
   </header>
   <nav class="mobile-nav" id="mobile-menu" aria-label="Мобильное меню" hidden><a href="#/category/astrology">Астрология</a><a href="#/horoscopes">Гороскопы</a><a href="#/category/numerology">Нумерология</a><a href="#/matrix">Матрица судьбы</a><a href="#/category/tarot">Таро и практики</a><a href="https://t.me/taroelisabet" target="_blank" rel="noopener noreferrer">Telegram · @taroelisabet</a></nav>
+  <div class="menu-backdrop" aria-hidden="true" hidden></div>
   <main id="main" tabindex="-1"></main>
-  <footer class="footer"><div class="footer-top"><a class="footer-wordmark" href="#/">ELISABET<span><svg class="site-icon icon-sparkle" data-icon="sparkle" viewBox="0 0 32 32" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 3c1.4 8.3 4.7 11.6 13 13-8.3 1.4-11.6 4.7-13 13C14.6 20.7 11.3 17.4 3 16 11.3 14.6 14.6 11.3 16 3Z"/></svg></span></a><p>Место, где символы становятся<br>поводом услышать себя.</p><a href="https://t.me/taroelisabet" target="_blank" rel="noopener noreferrer">@taroelisabet <svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M7 17 17 7M7 7h10v10"/></svg></a></div><div class="footer-bottom"><span>© <span id="year"></span> ELISABET</span><p>Эзотерические практики — пространство символов и размышлений. Они не являются научным прогнозом и не заменяют профессиональную помощь.</p><span>С вниманием к тебе</span></div></footer>
+  <footer class="footer"><div class="footer-top"><a class="footer-wordmark" href="#/">ELISABET<span><svg class="site-icon icon-sparkle" data-icon="sparkle" viewBox="0 0 32 32" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M16 3c1.4 8.3 4.7 11.6 13 13-8.3 1.4-11.6 4.7-13 13C14.6 20.7 11.3 17.4 3 16 11.3 14.6 14.6 11.3 16 3Z"/></svg></span></a><p>Место, где символы становятся<br>поводом услышать себя.</p><a href="https://t.me/taroelisabet" target="_blank" rel="noopener noreferrer">@taroelisabet </a></div><div class="footer-bottom"><span>© <span id="year"></span> ELISABET</span><p>Эзотерические практики — пространство символов и размышлений. Они не являются научным прогнозом и не заменяют профессиональную помощь.</p><span>С вниманием к тебе</span></div></footer>
   <dialog id="search-dialog" aria-labelledby="search-title"><div class="search-dialog-head"><h2 id="search-title">Что тебя интересует?</h2><button class="icon-btn search-close" aria-label="Закрыть поиск"><svg class="site-icon icon-close" data-icon="close" viewBox="0 0 32 32" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="m8 8 16 16M24 8 8 24"/></svg></button></div><label class="search-field"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="global-search" type="search" placeholder="Натальная карта, арканы, совместимость…" autocomplete="off"></label><div id="search-results" aria-live="polite"></div></dialog>
   <div id="toast" class="toast" role="status"></div>
 <script>/* ELISABET — энциклопедия символических практик. */
@@ -932,7 +1013,6 @@ t('gene-keys','tarot','Генные ключи','Созерцательный я
   const icons = window.ELISABET_ICONS;
   const illustrated = (parts, ...values) => icons.replace(parts.reduce((html, part, index) => html + part + (index < values.length ? String(values[index]) : ''), ''));
   const telegram = 'https://t.me/taroelisabet';
-  const arrowIcon = '<svg class="arrow-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false"><path d="M7 17 17 7M7 7h10v10"/></svg>';
   const categories = {
     astrology: { title: 'Астрология', label: 'Язык звёзд', symbol: '☾', description: 'Планеты, циклы и твоя личная карта неба.', intro: 'От натальной карты до лунных циклов. Разбираемся в языке астрологии — спокойно, последовательно и с любопытством к себе.' },
     numerology: { title: 'Нумерология', label: 'Смысл в числах', symbol: 'Ⅶ', description: 'Числа как ещё один способ задать себе вопрос.', intro: 'Даты, имена и повторяющиеся числа. Познакомься с методами нумерологии и узнай, как устроены символические расчёты.' },
@@ -946,13 +1026,13 @@ t('gene-keys','tarot','Генные ключи','Созерцательный я
   let selectedSign = 'Овен', selectedPeriod = 'day';
   const symbols = ['✦','☾','☀','✧','◇'];
   const breadcrumb = (...parts) => `<div class="breadcrumbs"><a href="#/">Главная</a>${parts.map(p => `<span>/</span>${p.href ? `<a href="${p.href}">${esc(p.title)}</a>` : `<span>${esc(p.title)}</span>`}`).join('')}</div>`;
-  const topicRows = list => list.map(t => `<a class="topic-item" href="${link(t)}"><div><h3>${esc(t.title)}</h3><p>${esc(t.subtitle)}</p></div><span style="margin-left:auto;color:#7e9272" aria-hidden="true">${arrowIcon}</span></a>`).join('');
+  const topicRows = list => list.map(t => `<a class="topic-item" href="${link(t)}"><div><h3>${esc(t.title)}</h3><p>${esc(t.subtitle)}</p></div></a>`).join('');
   const topicList = list => `<div class="topic-list">${topicRows(list)}</div>`;
-  const telegramBand = () => `<section class="telegram-banner reveal"><div><div class="eyebrow">ПРОДОЛЖИМ ЗНАКОМСТВО</div><h2>Больше смыслов.<br>Ближе к тебе.</h2><p>Загляни в Telegram ELISABET — пространство<br>для тех, кому интересно узнать себя глубже.</p></div><a class="btn light" href="${telegram}" target="_blank" rel="noopener noreferrer">Перейти в Telegram <span aria-hidden="true">${arrowIcon}</span></a></section>`;
+  const telegramBand = () => `<section class="telegram-banner reveal"><div><div class="eyebrow">ПРОДОЛЖИМ ЗНАКОМСТВО</div><h2>Больше смыслов.<br>Ближе к тебе.</h2><p>Загляни в Telegram ELISABET — пространство<br>для тех, кому интересно узнать себя глубже.</p></div><a class="btn light" href="${telegram}" target="_blank" rel="noopener noreferrer">Перейти в Telegram </a></section>`;
   const drawCard = () => `<div class="practice-card"><div class="eyebrow">ТВОЙ МАЛЕНЬКИЙ РИТУАЛ</div><div class="draw-deck" aria-label="Выберите одну из трёх карт">${['✧','☾','✦'].map((s,i) => `<button class="tarot-back" data-draw="${i}" aria-label="Открыть карту ${i+1}"><span aria-hidden="true">${s}</span></button>`).join('')}</div><p class="deck-caption">Выдохни. Подумай о своём вопросе. Выбери карту.</p><div id="card-reading" class="card-reading" aria-live="polite" hidden></div></div>`;
 
   function home() {
-    main.innerHTML = illustrated`<div class="container page-enter"><section class="hero"><div class="hero-copy"><div class="eyebrow">ПРОСТРАНСТВО СМЫСЛОВ И САМОПОЗНАНИЯ</div><h1>Всё начинается<br><em>с тебя.</em></h1><p>Звёзды, числа и карты — не готовые ответы,<br>а красивые способы услышать себя.<br>Найди тот, что откликается именно тебе.</p><div class="hero-buttons"><a class="btn" href="#/explore">Найти свой ответ <span aria-hidden="true">✧</span></a><a class="text-link" href="#/daily">Открыть карту дня <span aria-hidden="true">${arrowIcon}</span></a></div><div class="small-note"><span aria-hidden="true">✺</span><span>Без случайных встреч. В своём ритме.</span></div></div><div class="hero-art"><img src="assets/hero.svg" width="1100" height="1100" alt="Три авторские карты Таро с Луной, Солнцем и Звездой среди небесных орбит"><div class="art-caption"><span aria-hidden="true">☾</span> ТВОЯ ЛИЧНАЯ ВСЕЛЕННАЯ</div><span class="hero-star" aria-hidden="true">✧</span><div class="art-bottom"><span>Интуиция знает путь.</span><span>ДОВЕРЬСЯ ЛЮБОПЫТСТВУ</span></div></div></section><div class="orbit-strip" aria-hidden="true"><span>Астрология</span><span>✧</span><span>Нумерология</span><span>✧</span><span>Матрица судьбы</span><span>✧</span><span>Таро и практики</span></div><section class="section" id="directions"><div class="eyebrow">ЧЕТЫРЕ ПУТИ К СЕБЕ</div><div class="section-heading"><h2>Выбери свою<br><em>точку притяжения</em></h2><p>Можно начать со знакомого.<br>А можно — с того, что давно притягивает.<br>Здесь есть место для обоих вариантов.</p></div><div class="category-grid">${Object.entries(categories).map(([id,c]) => `<a class="category-card reveal" href="#/category/${id}"><img src="assets/${id}.svg" width="700" height="500" alt="${esc(c.title)}: авторская иллюстрация" loading="lazy"><div><div class="card-topline"><span>${c.label}</span><span class="card-symbol" aria-hidden="true">${c.symbol}</span></div><h3>${c.title}</h3><p>${c.description}</p></div></a>`).join('')}</div></section><section class="practice-section reveal"><div class="practice-copy"><div class="eyebrow">ПОБУДЬ С СОБОЙ</div><h2>Одна карта.<br><em>Новый взгляд.</em></h2><p>Иногда, чтобы увидеть ситуацию иначе, достаточно одного образа. Пусть карта станет поводом для тихого разговора с собой.</p><a class="text-link" href="#/daily">О практике карты дня <span aria-hidden="true">${arrowIcon}</span></a></div>${drawCard()}</section><div class="tools-row"><a class="tool-preview reveal" href="#/matrix"><span aria-hidden="true">◇</span><div><h3>Твоя матрица</h3><p>Пять опор по дате рождения · 22 аркана</p></div><b aria-hidden="true">${arrowIcon}</b></a><a class="tool-preview reveal" href="#/horoscopes"><span aria-hidden="true">☾</span><div><h3>На одной волне со звёздами</h3><p>12 знаков · подсказки для размышления</p></div><b aria-hidden="true">${arrowIcon}</b></a></div>${libraryMarkup()}${telegramBand()}</div>`;
+    main.innerHTML = illustrated`<div class="container page-enter"><section class="hero"><div class="hero-copy"><div class="eyebrow">ПРОСТРАНСТВО СМЫСЛОВ И САМОПОЗНАНИЯ</div><h1>Всё начинается<br><em>с тебя.</em></h1><p>Звёзды, числа и карты — не готовые ответы,<br>а красивые способы услышать себя.<br>Найди тот, что откликается именно тебе.</p><div class="hero-buttons"><a class="btn" href="#/explore">Найти свой ответ <span aria-hidden="true">✧</span></a><a class="text-link" href="#/daily">Открыть карту дня </a></div><div class="small-note"><span aria-hidden="true">✺</span><span>Без случайных встреч. В своём ритме.</span></div></div><div class="hero-art"><img src="assets/hero.svg" width="1100" height="1100" alt="Три авторские карты Таро с Луной, Солнцем и Звездой среди небесных орбит"><div class="art-caption"><span aria-hidden="true">☾</span> ТВОЯ ЛИЧНАЯ ВСЕЛЕННАЯ</div><span class="hero-star" aria-hidden="true">✧</span><div class="art-bottom"><span>Интуиция знает путь.</span><span>ДОВЕРЬСЯ ЛЮБОПЫТСТВУ</span></div></div></section><div class="orbit-strip" aria-hidden="true"><span>Астрология</span><span>✧</span><span>Нумерология</span><span>✧</span><span>Матрица судьбы</span><span>✧</span><span>Таро и практики</span></div><section class="section" id="directions"><div class="eyebrow">ЧЕТЫРЕ ПУТИ К СЕБЕ</div><div class="section-heading"><h2>Выбери свою<br><em>точку притяжения</em></h2><p>Можно начать со знакомого.<br>А можно — с того, что давно притягивает.<br>Здесь есть место для обоих вариантов.</p></div><div class="category-grid">${Object.entries(categories).map(([id,c]) => `<a class="category-card reveal" href="#/category/${id}"><img src="assets/${id}.svg" width="700" height="500" alt="${esc(c.title)}: авторская иллюстрация" loading="lazy"><div><div class="card-topline"><span>${c.label}</span><span class="card-symbol" aria-hidden="true">${c.symbol}</span></div><h3>${c.title}</h3><p>${c.description}</p></div></a>`).join('')}</div></section><section class="practice-section reveal"><div class="practice-copy"><div class="eyebrow">ПОБУДЬ С СОБОЙ</div><h2>Одна карта.<br><em>Новый взгляд.</em></h2><p>Иногда, чтобы увидеть ситуацию иначе, достаточно одного образа. Пусть карта станет поводом для тихого разговора с собой.</p><a class="text-link" href="#/daily">О практике карты дня </a></div>${drawCard()}</section><div class="tools-row"><a class="tool-preview reveal" href="#/matrix"><span aria-hidden="true">◇</span><div><h3>Твоя матрица</h3><p>Пять опор по дате рождения · 22 аркана</p></div></a><a class="tool-preview reveal" href="#/horoscopes"><span aria-hidden="true">☾</span><div><h3>На одной волне со звёздами</h3><p>12 знаков · подсказки для размышления</p></div></a></div>${libraryMarkup()}${telegramBand()}</div>`;
     bindDraw(); bindLibrary();
   }
   function libraryMarkup() {
@@ -975,7 +1055,7 @@ t('gene-keys','tarot','Генные ключи','Созерцательный я
   function categoryPage(id) {
     const c=categories[id];if(!c)return notFound();
     const featured=id==='astrology'?'<a class="btn" href="#/horoscopes">Гороскопы по знакам <span>☾</span></a>':id==='matrix'?'<a class="btn" href="#/matrix">Рассчитать пять опор <span>◇</span></a>':id==='numerology'?'<a class="btn" href="#/numbers">Число жизненного пути <span>Ⅶ</span></a>':'<a class="btn" href="#/daily">Открыть карту дня <span>✧</span></a>';
-    main.innerHTML=illustrated`<div class="container category-page page-enter">${breadcrumb({title:c.title})}<div class="page-intro"><div class="eyebrow">${c.label} · ${count(id)} ТЕМ</div><h1>${c.title}</h1><p>${c.intro}</p><div class="category-top-row">${featured}<a class="text-link" href="#/explore">Все направления ${arrowIcon}</a></div></div><img class="page-art" src="assets/${id}.svg" alt="${c.title}: символическая иллюстрация">${topicList(topics.filter(t=>t.category===id))}${telegramBand()}</div>`;
+    main.innerHTML=illustrated`<div class="container category-page page-enter">${breadcrumb({title:c.title})}<div class="page-intro"><div class="eyebrow">${c.label} · ${count(id)} ТЕМ</div><h1>${c.title}</h1><p>${c.intro}</p><div class="category-top-row">${featured}<a class="text-link" href="#/explore">Все направления </a></div></div><img class="page-art" src="assets/${id}.svg" alt="${c.title}: символическая иллюстрация">${topicList(topics.filter(t=>t.category===id))}${telegramBand()}</div>`;
   }
   function articlePage(id) {
     const t=topics.find(t=>t.id===id);if(!t)return notFound();const c=categories[t.category];
@@ -984,7 +1064,7 @@ t('gene-keys','tarot','Генные ключи','Созерцательный я
     if(t.category==='numerology')tool='<a class="btn outline" href="#/numbers">Попробовать расчёт по дате Ⅶ</a>';
     if(t.category==='astrology')tool='<a class="btn outline" href="#/horoscopes">К подсказкам по знакам ☾</a>';
     if(t.category==='tarot')tool='<a class="btn outline" href="#/daily">Попробовать карту дня ✧</a>';
-    main.innerHTML=illustrated`<article class="container page-enter">${breadcrumb({title:c.title,href:'#/category/'+t.category},{title:t.title})}<header class="page-intro"><div class="eyebrow">${c.title} · БИБЛИОТЕКА</div><h1>${esc(t.title)}</h1><p>${esc(t.subtitle)}</p></header><div class="article-layout"><div class="article-body"><img class="article-image" src="assets/topics/${t.id}.svg" alt="${esc(t.title)} — тематическая символическая иллюстрация"><p class="lead">${esc(t.intro)}</p>${t.sections.map(s=>`<section><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p></section>`).join('')}<div class="article-tags">${t.tags.map(tag=>`<span class="article-tag">${esc(tag)}</span>`).join('')}</div>${tool}</div><aside class="article-aside"><span aria-hidden="true">✧</span><h3>Продолжим<br>в Telegram?</h3><p>Если эта тема откликается, загляни в пространство ELISABET.</p><a class="btn" href="${telegram}" target="_blank" rel="noopener noreferrer">@taroelisabet <span>${arrowIcon}</span></a></aside></div><section class="related-section"><h2>Нити, которые связаны</h2>${topicList(topics.filter(s=>s.category===t.category&&s.id!==t.id).slice(0,6))}</section>${telegramBand()}</article>`;
+    main.innerHTML=illustrated`<article class="container page-enter">${breadcrumb({title:c.title,href:'#/category/'+t.category},{title:t.title})}<header class="page-intro"><div class="eyebrow">${c.title} · БИБЛИОТЕКА</div><h1>${esc(t.title)}</h1><p>${esc(t.subtitle)}</p></header><div class="article-layout"><div class="article-body"><img class="article-image" src="assets/topics/${t.id}.svg" alt="${esc(t.title)} — тематическая символическая иллюстрация"><p class="lead">${esc(t.intro)}</p>${t.sections.map(s=>`<section><h2>${esc(s.title)}</h2><p>${esc(s.text)}</p></section>`).join('')}<div class="article-tags">${t.tags.map(tag=>`<span class="article-tag">${esc(tag)}</span>`).join('')}</div>${tool}</div><aside class="article-aside"><span aria-hidden="true">✧</span><h3>Продолжим<br>в Telegram?</h3><p>Если эта тема откликается, загляни в пространство ELISABET.</p><a class="btn" href="${telegram}" target="_blank" rel="noopener noreferrer">@taroelisabet </a></aside></div><section class="related-section"><h2>Нити, которые связаны</h2>${topicList(topics.filter(s=>s.category===t.category&&s.id!==t.id).slice(0,6))}</section>${telegramBand()}</article>`;
   }
   function bindDraw() {
     document.querySelectorAll('[data-draw]').forEach(b=>b.addEventListener('click',()=>{
@@ -1056,20 +1136,44 @@ t('gene-keys','tarot','Генные ключи','Созерцательный я
   }
   const dialog=document.getElementById('search-dialog'),searchInput=document.getElementById('global-search');
   function search(){const q=searchInput.value.trim().toLocaleLowerCase('ru');const list=topics.filter(t=>!q||[t.title,t.subtitle,t.intro,...t.tags].join(' ').toLocaleLowerCase('ru').includes(q)).slice(0,25);document.getElementById('search-results').innerHTML=list.length?list.map(t=>`<a href="${link(t)}">${esc(t.title)}<small>${categories[t.category].title} · ${esc(t.subtitle)}</small></a>`).join(''):'<p>Ничего не найдено. Попробуй другое слово.</p>';}
-  document.querySelector('.search-open').addEventListener('click',()=>{dialog.showModal();searchInput.value='';search();searchInput.focus();});
+  document.querySelector('.search-open').addEventListener('click',()=>{setMobileMenu(false);dialog.showModal();searchInput.value='';search();searchInput.focus();});
   document.querySelector('.search-close').addEventListener('click',()=>dialog.close());
   searchInput.addEventListener('input',search);
   dialog.addEventListener('click',e=>{if(e.target.closest('a'))dialog.close();if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});
+  const menuPanel=document.querySelector('.mobile-nav');
+  const menuButton=document.querySelector('.menu-toggle');
+  const menuBackdrop=document.querySelector('.menu-backdrop');
+  const pageFooter=document.querySelector('.footer');
+  let menuOpen=false;
   function setMobileMenu(open) {
-    const button=document.querySelector('.menu-toggle');
-    document.querySelector('.mobile-nav').hidden=!open;
-    button.setAttribute('aria-expanded',String(open));
-    button.setAttribute('aria-label',open?'Закрыть меню':'Открыть меню');
+    menuOpen=Boolean(open);
+    // Keep the panel mounted: CSS can smoothly reverse a transition on rapid taps.
+    menuPanel.hidden=false;
+    menuBackdrop.hidden=false;
+    menuPanel.setAttribute('data-open',String(menuOpen));
+    menuBackdrop.setAttribute('data-open',String(menuOpen));
+    menuPanel.setAttribute('aria-hidden',String(!menuOpen));
+    menuPanel.inert=!menuOpen;
+    main.inert=menuOpen;
+    pageFooter.inert=menuOpen;
+    menuButton.setAttribute('aria-expanded',String(menuOpen));
+    menuButton.setAttribute('aria-label',menuOpen?'Закрыть меню':'Открыть меню');
   }
-  document.querySelector('.menu-toggle').setAttribute('aria-controls','mobile-menu');
-  document.querySelector('.menu-toggle').addEventListener('click',()=>setMobileMenu(document.querySelector('.mobile-nav').hidden));
-  document.querySelector('.mobile-nav').addEventListener('click',e=>{if(e.target.closest('a'))setMobileMenu(false);});
-  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!document.querySelector('.mobile-nav').hidden){setMobileMenu(false);document.querySelector('.menu-toggle').focus();}});
+  function updateMenuPosition() {
+    const header=document.querySelector('.header');
+    const height=Math.ceil(header.getBoundingClientRect().height||header.offsetHeight||100);
+    document.documentElement.style.setProperty('--menu-header-height',height+'px');
+  }
+  menuButton.setAttribute('aria-controls','mobile-menu');
+  menuButton.addEventListener('click',()=>setMobileMenu(!menuOpen));
+  menuPanel.addEventListener('click',e=>{if(e.target.closest('a'))setMobileMenu(false);});
+  menuBackdrop.addEventListener('click',()=>{setMobileMenu(false);menuButton.focus();});
+  menuBackdrop.addEventListener('wheel',event=>{if(event.cancelable)event.preventDefault();},{passive:false});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menuOpen){setMobileMenu(false);menuButton.focus();}});
+  document.addEventListener('focusin',event=>{if(menuOpen&&!menuPanel.contains(event.target)&&!document.querySelector('.header').contains(event.target))setMobileMenu(false);});
+  updateMenuPosition();
+  if('ResizeObserver' in window)new ResizeObserver(updateMenuPosition).observe(document.querySelector('.header'));
+  else window.addEventListener('resize',updateMenuPosition);
   const desktopMenu=matchMedia('(min-width: 1281px)');
   const closeDesktopMenu=event=>{if(event.matches)setMobileMenu(false);};
   if(desktopMenu.addEventListener)desktopMenu.addEventListener('change',closeDesktopMenu);
